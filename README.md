@@ -31,7 +31,9 @@ The goal was to validate the architecture, not ship a product. Key limitations:
 ## Running locally
 
 ```bash
+cd backend
 GOOS=js GOARCH=wasm go build -o ../main.wasm .
+cd ..
 cp $(go env GOROOT)/misc/wasm/wasm_exec.js .
 # serve with any static file server
 ```
