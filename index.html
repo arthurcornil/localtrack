@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Localtrack</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+		<link rel="stylesheet" href="style.css"/>
+	</head>
+	<body>
+		<div class="app">
+			<header>
+				<div class="logo">localtrack<span class="logo-dot">.</span></div>
+				<div class="tagline">local-first time tracker</div>
+			</header>
+			<div class="timer-block">
+				<div class="timer-fields">
+					<div class="field">
+						<label>Description</label>
+						<input id="timer-desc" type="text" placeholder="What are you working on?" />
+					</div>
+					<div class="field">
+						<label>Project</label>
+						<input id="timer-project" type="text" placeholder="Client / project" />
+					</div>
+				</div>
+				<div class="timer-row">
+					<div class="elapsed" id="elapsed">00:00:00</div>
+					<button class="btn-start" id="btn-start">
+						<span class="btn-icon"></span>
+						<span id="btn-label">Start</span>
+					</button>
+				</div>
+			</div>
+
+			<div class="divider">or add manually</div>
+			<div class="manual-block">
+				<div class="manual-fields">
+					<div class="field">
+						<label>Description</label>
+						<input id="manual-desc" type="text" placeholder="What did you work on?" />
+					</div>
+					<div class="field">
+						<label>Start</label>
+						<input id="manual-start" type="datetime-local" />
+					</div>
+					<div class="field">
+						<label>End</label>
+						<input id="manual-end" type="datetime-local" />
+					</div>
+					<button class="btn-add" id="btn-add" title="Add entry">+</button>
+				</div>
+			</div>
+
+			<div class="entries-header">
+				<div class="entries-title">Entries</div>
+				<div class="entries-total" id="entries-total"></div>
+			</div>
+			<div class="entries-list" id="entries-list">
+				<div class="empty">No entries yet — start the timer or add one manually.</div>
+			</div>
+
+		</div>
+
+		<div class="toast" id="toast"></div>
+		<script type="module" src="script.js"></script>
+	</body>
+</html>
