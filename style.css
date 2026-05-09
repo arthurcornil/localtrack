@@ -275,6 +275,111 @@ header {
   border-bottom-right-radius: var(--radius);
 }
 
+/* ── Period Toggle ── */
+.period-toggle {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.period-btn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--subtle);
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.period-btn:hover {
+  border-color: var(--muted);
+  color: var(--dim);
+}
+
+.period-btn.active {
+  background: var(--surface);
+  border-color: var(--accent-dim);
+  color: var(--accent);
+}
+
+/* ── Project Summary ── */
+.project-summary {
+  margin-bottom: 28px;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.summary-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--subtle);
+}
+
+.summary-row {
+  display: grid;
+  grid-template-columns: 1fr 72px 100px;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.summary-row:hover {
+  background: var(--surface);
+}
+
+.summary-row.active {
+  background: var(--surface);
+  border-color: var(--accent-dim);
+}
+
+.summary-name {
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.summary-time {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--dim);
+  text-align: right;
+}
+
+.summary-bar-track {
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.summary-bar-fill {
+  height: 100%;
+  background: var(--accent-dim);
+  border-radius: 2px;
+  transition: width 0.4s ease, background 0.15s;
+}
+
+.summary-row.active .summary-bar-fill {
+  background: var(--accent);
+}
+
 /* ── Entries ── */
 .entries-header {
   display: flex;

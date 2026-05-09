@@ -191,22 +191,117 @@ function totalMs(entries) {
 }
 
 let allEntries = [];
+let activeProjectFilter = null;
+let activePeriod = 'all';
 
-function renderEntries(entries = []) {
-	allEntries = entries;
+const projectSummaryEl = document.getElementById('project-summary');
+const entriesTitleEl   = document.getElementById('entries-title');
+
+function getPeriodBounds() {
+	const d = new Date();
+	if (activePeriod === 'today') {
+		return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+	}
+	if (activePeriod === 'week') {
+		const day  = d.getDay();
+		const diff = day === 0 ? -6 : 1 - day;
+		return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff).getTime();
+	}
+	if (activePeriod === 'month') {
+		return new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+	}
+	return null;
+}
+
+function periodFilteredEntries() {
+	const start = getPeriodBounds();
+	if (start === null) return allEntries;
+	return allEntries.filter(e => e.started_at >= start);
+}
+
+function periodLabel() {
+	if (activePeriod === 'today') return 'today';
+	if (activePeriod === 'week')  return 'this week';
+	if (activePeriod === 'month') return 'this month';
+	return null;
+}
+
+function renderProjectSummary() {
+	const completed = periodFilteredEntries().filter(e => e.ended_at !== null && e.project_id !== null);
+
+	if (!completed.length || !allProjects.size) {
+		projectSummaryEl.innerHTML = '';
+		return;
+	}
+
+	const byProject = new Map();
+	for (const e of completed) {
+		byProject.set(e.project_id, (byProject.get(e.project_id) || 0) + (e.ended_at - e.started_at));
+	}
+
+	const sorted = [...byProject.entries()].sort((a, b) => b[1] - a[1]);
+	const maxMs  = sorted[0][1];
+
+	const rows = sorted.map(([projectId, ms]) => {
+		const project = [...allProjects].find(p => p.id === projectId);
+		if (!project) return '';
+		const pct      = Math.round((ms / maxMs) * 100);
+		const isActive = activeProjectFilter === projectId;
+		return `
+<div class="summary-row${isActive ? ' active' : ''}" data-project-id="${projectId}">
+	<div class="summary-name">${escHtml(project.name)}</div>
+	<div class="summary-time">${formatDuration(ms)}</div>
+	<div class="summary-bar-track"><div class="summary-bar-fill" style="width:${pct}%"></div></div>
+</div>`;
+	}).join('');
+
+	projectSummaryEl.innerHTML = `<div class="summary-header"><span class="summary-title">Projects</span></div>${rows}`;
+
+	projectSummaryEl.querySelectorAll('.summary-row').forEach(row => {
+		row.addEventListener('click', () => {
+			const id = Number(row.dataset.projectId);
+			activeProjectFilter = activeProjectFilter === id ? null : id;
+			renderProjectSummary();
+			applyEntriesFilter();
+		});
+	});
+}
+
+function applyEntriesFilter() {
 	const list  = document.getElementById('entries-list');
 	const total = document.getElementById('entries-total');
 
-	if (!entries.length) {
-		list.innerHTML  = '<div class="empty">No entries yet — start the timer or add one manually.</div>';
+	const base    = periodFilteredEntries();
+	const visible = activeProjectFilter !== null
+		? base.filter(e => e.project_id === activeProjectFilter)
+		: base;
+
+	if (activeProjectFilter !== null) {
+		const project = [...allProjects].find(p => p.id === activeProjectFilter);
+		entriesTitleEl.textContent = project ? project.name : 'Entries';
+	} else {
+		entriesTitleEl.textContent = 'Entries';
+	}
+
+	if (!visible.length) {
+		const pl = periodLabel();
+		let msg;
+		if (!allEntries.length) {
+			msg = 'No entries yet — start the timer or add one manually.';
+		} else if (activeProjectFilter !== null) {
+			msg = pl ? `No entries for this project ${pl}.` : 'No entries for this project.';
+		} else {
+			msg = pl ? `No entries ${pl}.` : 'No entries yet — start the timer or add one manually.';
+		}
+		list.innerHTML = `<div class="empty">${msg}</div>`;
 		total.innerHTML = '';
 		return;
 	}
 
-	total.innerHTML = `Total <span>${formatDuration(totalMs(entries))}</span>`;
+	total.innerHTML = `Total <span>${formatDuration(totalMs(visible))}</span>`;
 
-	list.innerHTML = entries.map(e => {
-		const dur = e.ended_at - e.started_at;
+	list.innerHTML = visible.map(e => {
+		const dur     = e.ended_at - e.started_at;
 		const project = [...allProjects].find(p => p.id == e.project_id);
 		const projectTag = project
 			? `<span class="entry-project">${escHtml(project.name)}</span>`
@@ -234,6 +329,12 @@ function renderEntries(entries = []) {
 	list.querySelectorAll('.btn-delete').forEach(btn => {
 		btn.addEventListener('click', () => send('deleteEntry', { id: Number(btn.dataset.id) }));
 	});
+}
+
+function renderEntries(entries = []) {
+	allEntries = entries;
+	renderProjectSummary();
+	applyEntriesFilter();
 }
 
 function escHtml(str) {
@@ -309,6 +410,9 @@ function getProjectId(value) {
 function updateProjectList(projects) {
 	allProjects.clear();
 	projects.forEach(project => allProjects.add(project));
+	if (activeProjectFilter !== null && !projects.find(p => p.id === activeProjectFilter)) {
+		activeProjectFilter = null;
+	}
 	if (projectsDialog.open) renderProjectsDialog();
 	renderEntries(allEntries);
 }
@@ -408,3 +512,13 @@ function setupProjectInput(input, dropdown) {
 setupProjectInput(timerProject, timerProjectDropdown);
 setupProjectInput(manualProject, manualProjectDropdown);
 setupProjectInput(editEntryProject, editEntryProjectDropdown);
+
+document.getElementById('period-toggle').addEventListener('click', e => {
+	const btn = e.target.closest('.period-btn');
+	if (!btn) return;
+	activePeriod = btn.dataset.period;
+	activeProjectFilter = null;
+	document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b === btn));
+	renderProjectSummary();
+	applyEntriesFilter();
+});
