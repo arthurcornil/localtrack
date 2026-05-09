@@ -41,6 +41,16 @@ worker.onmessage = ({ data }) => {
 			btnStart.classList.add('active');
 			btnLabel.textContent = 'Stop';
 			break;
+		case 'entryUpdated':
+			worker.postMessage({ action: 'getEntries' });
+			worker.postMessage({ action: 'getProjects' });
+			showToast('Entry updated.');
+			if (editEntryDialog.open) editEntryDialog.close();
+			break;
+		case 'projectUpdated':
+			worker.postMessage({ action: 'getProjects' });
+			showToast('Project updated.');
+			break;
 		case 'error':
 			showToast('Something went wrong.');
 			console.error(payload);
@@ -203,13 +213,23 @@ function renderEntries(entries = []) {
 			: '';
 		return `
 <div class="entry" data-id="${e.id}">
-<div class="entry-desc">${escHtml(e.name)}${projectTag}</div>
-<div class="entry-time">${formatDate(e.started_at)} · ${formatTime(e.started_at)}–${formatTime(e.ended_at)}</div>
-<div class="entry-duration">${formatDuration(dur)}</div>
-<button class="btn-delete" data-id="${e.id}" title="Delete">×</button>
+	<div class="entry-desc">${escHtml(e.name)}${projectTag}</div>
+	<div class="entry-time">${formatDate(e.started_at)} · ${formatTime(e.started_at)}–${formatTime(e.ended_at)}</div>
+	<div class="entry-duration">${formatDuration(dur)}</div>
+	<div class="entry-actions">
+		<button class="btn-edit" data-id="${e.id}" title="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+		<button class="btn-delete" data-id="${e.id}" title="Delete">×</button>
+	</div>
 </div>
 `;
 	}).join('');
+
+	list.querySelectorAll('.btn-edit').forEach(btn => {
+		btn.addEventListener('click', () => {
+			const entry = allEntries.find(e => e.id === Number(btn.dataset.id));
+			if (entry) openEditEntry(entry);
+		});
+	});
 
 	list.querySelectorAll('.btn-delete').forEach(btn => {
 		btn.addEventListener('click', () => send('deleteEntry', { id: Number(btn.dataset.id) }));
@@ -229,6 +249,49 @@ function showToast(msg) {
 	toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+const editEntryDialog  = document.getElementById('edit-entry-dialog');
+const editEntryDesc    = document.getElementById('edit-entry-desc');
+const editEntryProject = document.getElementById('edit-entry-project');
+const editEntryProjectDropdown = document.getElementById('edit-entry-project-dropdown');
+const editEntryStart   = document.getElementById('edit-entry-start');
+const editEntryEnd     = document.getElementById('edit-entry-end');
+
+let editingEntryId = null;
+
+document.getElementById('edit-entry-close').addEventListener('click', () => editEntryDialog.close());
+editEntryDialog.addEventListener('click', e => { if (e.target === editEntryDialog) editEntryDialog.close(); });
+
+function openEditEntry(entry) {
+	editingEntryId = entry.id;
+	editEntryDesc.value  = entry.name;
+	editEntryStart.value = toLocalInput(new Date(entry.started_at));
+	editEntryEnd.value   = toLocalInput(new Date(entry.ended_at));
+	const project = [...allProjects].find(p => p.id === entry.project_id);
+	editEntryProject.value = project ? project.name : '';
+	editEntryDialog.showModal();
+}
+
+document.getElementById('edit-entry-save').addEventListener('click', () => {
+	const desc  = editEntryDesc.value.trim();
+	const start = editEntryStart.value;
+	const end   = editEntryEnd.value;
+
+	if (!start || !end) { showToast('Please set start and end times.'); return; }
+	const s = new Date(start).getTime();
+	const e = new Date(end).getTime();
+	if (e <= s) { showToast('End must be after start.'); return; }
+
+	const projectValue = editEntryProject.value.trim();
+	send('updateEntry', {
+		id: editingEntryId,
+		name: desc || 'Untitled',
+		started_at: s,
+		ended_at: e,
+		project_id: isNewProject(projectValue) ? null : getProjectId(projectValue),
+		projectName: isNewProject(projectValue) ? projectValue : null,
+	});
+});
+
 let allProjects = new Set();
 
 function isNewProject(value) {
@@ -247,6 +310,7 @@ function updateProjectList(projects) {
 	allProjects.clear();
 	projects.forEach(project => allProjects.add(project));
 	if (projectsDialog.open) renderProjectsDialog();
+	renderEntries(allEntries);
 }
 
 const projectsDialog = document.getElementById('projects-dialog');
@@ -269,18 +333,39 @@ function renderProjectsDialog() {
 		list.innerHTML = '<div class="dialog-empty">No projects yet.</div>';
 		return;
 	}
-	list.innerHTML = projects.map(p => {
-		return `
-<div class="project-row">
+	list.innerHTML = projects.map(p => `
+<div class="project-row" data-id="${p.id}">
 	<span class="project-row-name">${escHtml(p.name)}</span>
-	<button class="btn-delete" data-id="${p.id}" title="Delete" style="padding: 6px 10px 6px 10px;">DELETE</button>
-</div>`;
-	}).join('');
+	<div class="project-row-actions">
+		<button class="btn-edit-project" data-id="${p.id}" data-name="${escHtml(p.name)}" title="Edit">EDIT</button>
+		<button class="btn-delete-project" data-id="${p.id}" title="Delete" style="padding: 5px 10px;">DELETE</button>
+	</div>
+</div>`).join('');
 
-	list.querySelectorAll('.btn-delete').forEach(btn => {
+	list.querySelectorAll('.btn-edit-project').forEach(btn => {
 		btn.addEventListener('click', () => {
-			send('deleteProject', { id: Number(btn.dataset.id) })
+			const row = btn.closest('.project-row');
+			const id  = Number(btn.dataset.id);
+			row.innerHTML = `
+	<input class="project-row-input" value="${escHtml(btn.dataset.name)}" />
+	<div class="project-row-actions">
+		<button class="btn-save-project">SAVE</button>
+		<button class="btn-cancel-project">CANCEL</button>
+	</div>`;
+			const input = row.querySelector('.project-row-input');
+			input.focus();
+			input.select();
+			row.querySelector('.btn-save-project').addEventListener('click', () => {
+				const newName = input.value.trim();
+				if (!newName) { showToast('Project name cannot be empty.'); return; }
+				send('updateProject', { id, name: newName });
+			});
+			row.querySelector('.btn-cancel-project').addEventListener('click', () => renderProjectsDialog());
 		});
+	});
+
+	list.querySelectorAll('.btn-delete-project').forEach(btn => {
+		btn.addEventListener('click', () => send('deleteProject', { id: Number(btn.dataset.id) }));
 	});
 }
 
@@ -322,3 +407,4 @@ function setupProjectInput(input, dropdown) {
 
 setupProjectInput(timerProject, timerProjectDropdown);
 setupProjectInput(manualProject, manualProjectDropdown);
+setupProjectInput(editEntryProject, editEntryProjectDropdown);

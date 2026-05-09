@@ -19,6 +19,7 @@ initConnection();
 let entries;
 let projects;
 let entry;
+let project;
 
 self.postMessage({ action: 'ready' });
 self.onmessage = ({ data }) => {
@@ -39,6 +40,22 @@ self.onmessage = ({ data }) => {
 			entries = JSON.parse(getEntries());
 			self.postMessage({ action: 'entryAdded', payload: entry });
 			self.postMessage({ action: 'entries', payload: entries });
+			break;
+		case 'updateEntry':
+			entry = payload;
+			if (entry.projectName) {
+				const projectId = addProject(JSON.stringify({ name: entry.projectName }));
+				projects = JSON.parse(getProjects());
+				entry.project_id = projectId;
+				self.postMessage({ action: 'projects', payload: projects });
+			}
+			updateEntry(JSON.stringify(payload));
+			self.postMessage({ action: 'entryUpdated' });
+			break;
+		case 'updateProject':
+			project = payload;
+			JSON.parse(updateProject(JSON.stringify(payload)))
+			self.postMessage({ action: 'projectUpdated' })
 			break;
 		case 'getEntries':
 			entries = JSON.parse(getEntries());

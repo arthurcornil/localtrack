@@ -168,6 +168,21 @@ func deleteProject(this js.Value, args []js.Value) any {
 	return "ok"
 }
 
+func updateProject(this js.Value, args []js.Value) any {
+	payload := args[0].String()
+
+	var project Project
+	if err := json.Unmarshal([]byte(payload), &project); err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	_, err := db.Exec(`UPDATE projects SET name = ? WHERE id = ?`, project.Name, project.ID)
+	jsonProject, err := json.Marshal(project)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return string(jsonProject)
+}
+
 func updateEntry(this js.Value, args []js.Value) any {
 	payload := args[0].String()
 
@@ -227,5 +242,6 @@ func main() {
 	js.Global().Set("addProject", js.FuncOf(addProject))
 	js.Global().Set("getProjects", js.FuncOf(getProjects))
 	js.Global().Set("deleteProject", js.FuncOf(deleteProject))
+	js.Global().Set("updateProject", js.FuncOf(updateProject))
 	select {}
 }

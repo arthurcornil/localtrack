@@ -306,7 +306,7 @@ header {
 
 .entry {
   display: grid;
-  grid-template-columns: 1fr 100px 90px 28px;
+  grid-template-columns: 1fr 100px 90px auto;
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
@@ -356,6 +356,13 @@ header {
   text-align: right;
 }
 
+.entry-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
 .btn-delete {
   background: none;
   border: none;
@@ -367,8 +374,21 @@ header {
   transition: color 0.15s, background 0.15s;
   line-height: 1;
 }
-
 .btn-delete:hover { color: var(--danger); background: rgba(240,96,96,0.08); }
+
+.btn-edit {
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s, background 0.15s;
+  line-height: 1;
+}
+.btn-edit:hover { color: var(--accent); background: rgba(200,240,96,0.08); }
 
 .empty {
   text-align: center;
@@ -400,6 +420,45 @@ header {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ── Edit Entry dialog ── */
+.edit-entry-body {
+  padding: 20px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.edit-entry-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.field-full { grid-column: 1 / -1; }
+
+.dialog-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.btn-save-entry {
+  background: var(--accent);
+  color: #0e0e0f;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 10px 20px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-save-entry:hover { background: #d9ff6a; }
 
 /* ── Projects dialog ── */
 dialog {
@@ -456,10 +515,75 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
   align-items: center;
   justify-content: space-between;
   padding: 10px 24px;
+  gap: 12px;
   transition: background 0.15s;
 }
 .project-row:hover { background: var(--bg); }
-.project-row-name { font-size: 13px; color: var(--text); }
+.project-row-name { font-size: 13px; color: var(--text); flex: 1; }
+
+.project-row-actions { display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+
+.project-row-input {
+  background: var(--bg);
+  border: 1px solid var(--accent-dim);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  padding: 5px 10px;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-edit-project {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-edit-project:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+.btn-delete-project {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--dim);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-delete-project:hover { border-color: var(--danger); color: var(--danger); }
+
+.btn-save-project, .btn-cancel-project {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: var(--radius);
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-save-project { background: var(--accent); color: #0e0e0f; }
+.btn-save-project:hover { background: #d9ff6a; }
+.btn-cancel-project { background: var(--border); color: var(--dim); }
+.btn-cancel-project:hover { background: var(--muted); color: var(--text); }
 .project-row-total {
   font-family: var(--mono);
   font-size: 12px;
@@ -484,6 +608,6 @@ dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
   .manual-fields .field:nth-child(3) { grid-column: 1;      grid-row: 3; }
   .manual-fields .field:nth-child(4) { grid-column: 2;      grid-row: 3; }
   .manual-fields .btn-add            { grid-column: 1 / -1; grid-row: 4; justify-self: end; }
-  .entry { grid-template-columns: 1fr 80px 28px; }
+  .entry { grid-template-columns: 1fr 80px auto; }
   .entry-time { display: none; }
 }

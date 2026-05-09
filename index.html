@@ -7,6 +7,7 @@
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link href="https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
 		<link rel="stylesheet" href="style.css"/>
+		<link rel="icon" type="image/png" href="favicon.png">
 	</head>
 	<body>
 		<div class="app">
@@ -94,6 +95,39 @@
 				<button class="dialog-close" id="dialog-close">×</button>
 			</div>
 			<div class="dialog-body" id="projects-list"></div>
+		</dialog>
+
+		<dialog id="edit-entry-dialog">
+			<div class="dialog-header">
+				<span class="dialog-title">Edit Entry</span>
+				<button class="dialog-close" id="edit-entry-close">×</button>
+			</div>
+			<div class="edit-entry-body">
+				<div class="edit-entry-fields">
+					<div class="field field-full">
+						<label>Description</label>
+						<input id="edit-entry-desc" type="text" placeholder="What did you work on?" />
+					</div>
+					<div class="field field-full">
+						<label>Project</label>
+						<div class="project-input-wrapper">
+							<input id="edit-entry-project" type="text" placeholder="Project" autocomplete="off" />
+							<div class="project-dropdown" id="edit-entry-project-dropdown"></div>
+						</div>
+					</div>
+					<div class="field">
+						<label>Start</label>
+						<input id="edit-entry-start" type="datetime-local" />
+					</div>
+					<div class="field">
+						<label>End</label>
+						<input id="edit-entry-end" type="datetime-local" />
+					</div>
+				</div>
+			</div>
+			<div class="dialog-footer">
+				<button class="btn-save-entry" id="edit-entry-save">Save</button>
+			</div>
 		</dialog>
 
 		<div class="toast" id="toast"></div>
