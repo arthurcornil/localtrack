@@ -1,6 +1,6 @@
 # Localtrack
 
-A local-first time tracker built as a proof of concept for a browser-native architecture: no server, no subscription, no personal data leaving your machine.
+A local-first time tracker built as a proof of concept for a browser-native architecture: no server, no authentication, no personal data leaving your machine.
 
 ## What this proves
 
@@ -9,14 +9,14 @@ Modern personal productivity tools are built as SaaS for business reasons, not t
 This project demonstrates that you can:
 - Write a backend in Go, compile it to WASM, and ship it to the browser
 - Store data persistently on the user's machine using OPFS
-- Deliver the whole thing via a URL — no install required
+- Deliver the whole thing via a URL; no install required
 
 ## Stack
 
-- **Go** — backend logic, compiled to WASM
+- **Go** backend logic, compiled to WASM
 - **SQLite** via `ncruces/go-sqlite3`
 - **OPFS VFS** via `danmestas/go-sqlite3-opfs`
-- **Vanilla JS** — frontend, no framework
+- **Vanilla JS** frontend, no framework
 
 ## Status
 
