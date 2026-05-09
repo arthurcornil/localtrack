@@ -17,18 +17,31 @@ _opfs_init(handles);
 initConnection();
 
 let entries;
+let projects;
 
 self.postMessage({ action: 'ready' });
 self.onmessage = ({ data }) => {
 	const { action, payload } = data;
 	switch (action) {
-		case 'addEntry':
-			addEntry(JSON.stringify(payload));
+		case 'saveEntry':
+			const entry = payload;
+			console.log(entry);
+			if (entry.projectName) {
+				const projectId = addProject(JSON.stringify({ name: entry.projectName }));
+				entry.project_id = projectId;
+			}
+			delete entry.projectName;
+			addEntry(JSON.stringify(entry));
 			self.postMessage({ action: 'entryAdded' });
 			break;
 		case 'getEntries':
+			console.log(getEntries());
 			entries = JSON.parse(getEntries());
 			self.postMessage({ action: 'entries', payload: entries });
+			break;
+		case 'getProjects':
+			projects = JSON.parse(getProjects());
+			self.postMessage({ action: 'projects', payload: projects });
 			break;
 		case 'deleteEntry':
 			deleteEntry(payload.id);

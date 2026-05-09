@@ -6,12 +6,17 @@ worker.onmessage = ({ data }) => {
 	switch (action) {
 		case 'ready':
 			workerReady = true;
+			worker.postMessage({ action: 'getProjects' });
 			worker.postMessage({ action: 'getEntries' });
 			break;
 		case 'entries':
 			renderEntries(payload);
 			break;
+		case 'projects':
+			updateProjectList(payload);
+			break;
 		case 'entryAdded':
+			worker.postMessage({ action: 'getProjects' });
 			worker.postMessage({ action: 'getEntries' });
 			showToast('Entry saved.');
 			break;
@@ -27,13 +32,16 @@ function send(action, payload = {}) {
 	worker.postMessage({ action, payload });
 }
 
+let pendingEntry = null;
+
 let timerInterval = null;
 let startedAt = null;
-const elapsedEl    = document.getElementById('elapsed');
-const btnStart     = document.getElementById('btn-start');
-const btnLabel     = document.getElementById('btn-label');
-const timerDesc    = document.getElementById('timer-desc');
-const timerProject = document.getElementById('timer-project');
+const elapsedEl         = document.getElementById('elapsed');
+const btnStart          = document.getElementById('btn-start');
+const btnLabel          = document.getElementById('btn-label');
+const timerDesc         = document.getElementById('timer-desc');
+const timerProject      = document.getElementById('timer-project');
+const timerProjectDropdown = document.getElementById('timer-project-dropdown');
 
 function formatElapsed(ms) {
 	const s = Math.floor(ms / 1000);
@@ -71,12 +79,15 @@ btnStart.addEventListener('click', () => {
 		clearInterval(timerInterval);
 		timerInterval = null;
 
-		console.log(timerDesc.value);
-		send('addEntry', {
+		const projectValue = timerProject.value.trim();
+		const entry = {
 			name: timerDesc.value.trim() || 'Untitled',
-			started_at:  startedAt,
-			ended_at:    endedAt,
-		});
+			started_at: startedAt,
+			ended_at: endedAt,
+			project_id: isNewProject(projectValue) ? null : getProjectId(projectValue),
+			projectName: isNewProject(projectValue) ? projectValue : null,
+		};
+		send('saveEntry', entry);
 
 		timerDesc.value    = '';
 		timerProject.value = '';
@@ -96,10 +107,12 @@ btnStart.addEventListener('click', () => {
 	}
 });
 
-const manualDesc  = document.getElementById('manual-desc');
-const manualStart = document.getElementById('manual-start');
-const manualEnd   = document.getElementById('manual-end');
-const btnAdd      = document.getElementById('btn-add');
+const manualDesc            = document.getElementById('manual-desc');
+const manualProject         = document.getElementById('manual-project');
+const manualProjectDropdown = document.getElementById('manual-project-dropdown');
+const manualStart           = document.getElementById('manual-start');
+const manualEnd             = document.getElementById('manual-end');
+const btnAdd                = document.getElementById('btn-add');
 
 function resetManualTimes() {
 	const now    = new Date();
@@ -125,14 +138,17 @@ btnAdd.addEventListener('click', () => {
 	const e = new Date(end).getTime();
 	if (e <= s) { showToast('End must be after start.'); return; }
 
-	send('addEntry', {
+	const projectValue = manualProject.value.trim();
+	send('saveEntry', {
 		name: desc || 'Untitled',
-		project:     '',
-		started_at:  s,
-		ended_at:    e,
+		started_at: s,
+		ended_at: e,
+		project_id: isNewProject(projectValue) ? null : getProjectId(projectValue),
+		projectName: isNewProject(projectValue) ? projectValue : null,
 	});
 
-	manualDesc.value = '';
+	manualDesc.value    = '';
+	manualProject.value = '';
 	resetManualTimes();
 });
 
@@ -154,8 +170,9 @@ function renderEntries(entries = []) {
 
 	list.innerHTML = entries.map(e => {
 		const dur = e.ended_at - e.started_at;
-		const projectTag = e.project
-			? `<span class="entry-project">${escHtml(e.project)}</span>`
+		const project = [...allProjects].find(p => p.id == e.project_id);
+		const projectTag = project
+			? `<span class="entry-project">${escHtml(project.name)}</span>`
 			: '';
 		return `
 <div class="entry" data-id="${e.id}">
@@ -184,3 +201,63 @@ function showToast(msg) {
 	clearTimeout(toastTimer);
 	toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
+
+let allProjects = new Set();
+
+function isNewProject(value) {
+	if (!value) return false;
+	const lower = value.toLowerCase();
+	return ![...allProjects].some(p => p.name.toLowerCase() === lower);
+}
+
+function getProjectId(value) {
+	if (!value) return null;
+	const lower = value.toLowerCase();
+	return [...allProjects].find(p => p.name.toLowerCase() === lower).id;
+}
+
+function updateProjectList(projects) {
+	allProjects.clear();
+	projects.forEach(project => {
+		allProjects.add(project);
+	});
+}
+
+function updateProjectDropdown(input, dropdown) {
+	const value = input.value.toLowerCase();
+	const filteredProjects = [...allProjects].filter(p => 
+		p.name.toLowerCase().includes(value) && p.name.toLowerCase() !== value
+	);
+	
+	if (filteredProjects.length === 0) {
+		dropdown.style.display = 'none';
+		return;
+	}
+	
+	dropdown.innerHTML = filteredProjects.map(project => 
+		`<div class="project-option" data-project="${project.name}">${escHtml(project.name)}</div>`
+	).join('');
+	
+	dropdown.style.display = 'block';
+	
+	dropdown.querySelectorAll('.project-option').forEach(option => {
+		option.addEventListener('click', () => {
+			input.value = option.dataset.project;
+			dropdown.style.display = 'none';
+			input.focus();
+		});
+	});
+}
+
+function hideDropdown(dropdown) {
+	setTimeout(() => dropdown.style.display = 'none', 150);
+}
+
+function setupProjectInput(input, dropdown) {
+	input.addEventListener('input', () => updateProjectDropdown(input, dropdown));
+	input.addEventListener('focus', () => updateProjectDropdown(input, dropdown));
+	input.addEventListener('blur', () => hideDropdown(dropdown));
+}
+
+setupProjectInput(timerProject, timerProjectDropdown);
+setupProjectInput(manualProject, manualProjectDropdown);

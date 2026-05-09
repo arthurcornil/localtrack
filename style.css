@@ -182,10 +182,16 @@ header {
 
 .manual-fields {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
+  grid-template-columns: 1fr 1fr auto;
   gap: 12px;
   align-items: end;
 }
+
+.manual-fields .field:nth-child(1) { grid-column: 1; grid-row: 1; }
+.manual-fields .field:nth-child(2) { grid-column: 2; grid-row: 1; }
+.manual-fields .field:nth-child(3) { grid-column: 1; grid-row: 2; }
+.manual-fields .field:nth-child(4) { grid-column: 2; grid-row: 2; }
+.manual-fields .btn-add            { grid-column: 3; grid-row: 2; }
 
 .btn-add {
   background: transparent;
@@ -200,6 +206,55 @@ header {
   line-height: 1;
 }
 .btn-add:hover { border-color: var(--accent-dim); color: var(--accent); }
+
+/* ── Project Dropdown ── */
+.project-input-wrapper {
+  position: relative;
+}
+
+.project-input-wrapper input {
+	width: 100%
+}
+
+.project-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  border-top: none;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.project-option {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.project-option:hover {
+  background: var(--border);
+}
+
+.project-option:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.project-option:last-child {
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
 
 /* ── Entries ── */
 .entries-header {
@@ -330,7 +385,11 @@ header {
 @media (max-width: 600px) {
   .timer-fields { grid-template-columns: 1fr; }
   .manual-fields { grid-template-columns: 1fr 1fr; }
-  .manual-fields .field:first-child { grid-column: 1 / -1; }
+  .manual-fields .field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
+  .manual-fields .field:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .manual-fields .field:nth-child(3) { grid-column: 1;      grid-row: 3; }
+  .manual-fields .field:nth-child(4) { grid-column: 2;      grid-row: 3; }
+  .manual-fields .btn-add            { grid-column: 1 / -1; grid-row: 4; justify-self: end; }
   .entry { grid-template-columns: 1fr 80px 28px; }
   .entry-time { display: none; }
 }

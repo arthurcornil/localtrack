@@ -29,7 +29,10 @@
 					</div>
 					<div class="field">
 						<label>Project</label>
-						<input id="timer-project" type="text" placeholder="Client / project" />
+						<div class="project-input-wrapper">
+							<input id="timer-project" type="text" placeholder="Client / project" autocomplete="off" />
+							<div class="project-dropdown" id="timer-project-dropdown"></div>
+						</div>
 					</div>
 				</div>
 				<div class="timer-row">
@@ -47,6 +50,13 @@
 					<div class="field">
 						<label>Description</label>
 						<input id="manual-desc" type="text" placeholder="What did you work on?" />
+					</div>
+					<div class="field">
+						<label>Project</label>
+						<div class="project-input-wrapper">
+							<input id="manual-project" type="text" placeholder="Client / project" autocomplete="off" />
+							<div class="project-dropdown" id="manual-project-dropdown"></div>
+						</div>
 					</div>
 					<div class="field">
 						<label>Start</label>
