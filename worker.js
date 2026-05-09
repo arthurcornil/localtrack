@@ -25,7 +25,6 @@ self.onmessage = ({ data }) => {
 	switch (action) {
 		case 'saveEntry':
 			const entry = payload;
-			console.log(entry);
 			if (entry.projectName) {
 				const projectId = addProject(JSON.stringify({ name: entry.projectName }));
 				entry.project_id = projectId;
@@ -35,7 +34,6 @@ self.onmessage = ({ data }) => {
 			self.postMessage({ action: 'entryAdded' });
 			break;
 		case 'getEntries':
-			console.log(getEntries());
 			entries = JSON.parse(getEntries());
 			self.postMessage({ action: 'entries', payload: entries });
 			break;
