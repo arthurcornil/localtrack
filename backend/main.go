@@ -40,7 +40,6 @@ func initConnection(this js.Value, args []js.Value) any {
 	if err != nil {
 		log.Fatal("failed to create table:", err)
 	}
-	fmt.Println("db ready")
 	return nil
 }
 
