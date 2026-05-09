@@ -45,5 +45,13 @@ self.onmessage = ({ data }) => {
 			deleteEntry(payload.id);
 			entries = JSON.parse(getEntries());
 			self.postMessage({ action: 'entries', payload: entries });
+			break;
+		case 'deleteProject':
+			const response = deleteProject(payload.id);
+			projects = JSON.parse(getProjects());
+			self.postMessage({ action: 'projects', payload: projects });
+			entries = JSON.parse(getEntries());
+			self.postMessage({ action: 'entries', payload: entries });
+			break;
 	}
 }

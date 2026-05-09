@@ -156,7 +156,10 @@ function totalMs(entries) {
 	return entries.reduce((sum, e) => sum + (e.ended_at - e.started_at), 0);
 }
 
+let allEntries = [];
+
 function renderEntries(entries = []) {
+	allEntries = entries;
 	const list  = document.getElementById('entries-list');
 	const total = document.getElementById('entries-total');
 
@@ -218,8 +221,42 @@ function getProjectId(value) {
 
 function updateProjectList(projects) {
 	allProjects.clear();
-	projects.forEach(project => {
-		allProjects.add(project);
+	projects.forEach(project => allProjects.add(project));
+	if (projectsDialog.open) renderProjectsDialog();
+}
+
+const projectsDialog = document.getElementById('projects-dialog');
+
+document.getElementById('btn-cog').addEventListener('click', () => {
+	renderProjectsDialog();
+	projectsDialog.showModal();
+});
+
+document.getElementById('dialog-close').addEventListener('click', () => projectsDialog.close());
+
+projectsDialog.addEventListener('click', e => {
+	if (e.target === projectsDialog) projectsDialog.close();
+});
+
+function renderProjectsDialog() {
+	const list = document.getElementById('projects-list');
+	const projects = [...allProjects];
+	if (!projects.length) {
+		list.innerHTML = '<div class="dialog-empty">No projects yet.</div>';
+		return;
+	}
+	list.innerHTML = projects.map(p => {
+		return `
+<div class="project-row">
+	<span class="project-row-name">${escHtml(p.name)}</span>
+	<button class="btn-delete" data-id="${p.id}" title="Delete" style="padding: 6px 10px 6px 10px;">Delete</button>
+</div>`;
+	}).join('');
+
+	list.querySelectorAll('.btn-delete').forEach(btn => {
+		btn.addEventListener('click', () => {
+			send('deleteProject', { id: Number(btn.dataset.id) })
+		});
 	});
 }
 

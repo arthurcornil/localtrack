@@ -153,6 +153,15 @@ func deleteEntry(this js.Value, args []js.Value) any {
 	return "ok"
 }
 
+func deleteProject(this js.Value, args []js.Value) any {
+	id := args[0].Int()
+	_, err := db.Exec(`DELETE FROM projects WHERE id = ?`, id)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return "ok"
+}
+
 func main() {
 	js.Global().Set("initConnection", js.FuncOf(initConnection))
 	js.Global().Set("addEntry", js.FuncOf(addEntry))
@@ -160,5 +169,6 @@ func main() {
 	js.Global().Set("getEntries", js.FuncOf(getEntries))
 	js.Global().Set("getProjects", js.FuncOf(getProjects))
 	js.Global().Set("deleteEntry", js.FuncOf(deleteEntry))
+	js.Global().Set("deleteProject", js.FuncOf(deleteProject))
 	select {}
 }
