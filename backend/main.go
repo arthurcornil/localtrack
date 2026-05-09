@@ -68,7 +68,7 @@ func addEntry(this js.Value, args []js.Value) any {
 		return fmt.Sprintf("error: %v", err)
 	}
 	entry.CreatedAt = time.Now().UnixMilli()
-	_, err := db.Exec(`INSERT INTO entries (name, project_id, started_at, ended_at, created_at) VALUES (?, ?, ?, ?, ?)`,
+	result, err := db.Exec(`INSERT INTO entries (name, project_id, started_at, ended_at, created_at) VALUES (?, ?, ?, ?, ?)`,
 		entry.Name,
 		entry.ProjectID,
 		entry.StartedAt,
@@ -78,7 +78,13 @@ func addEntry(this js.Value, args []js.Value) any {
 	if err != nil {
 		return fmt.Sprintf("error: %v", err)
 	}
-	return "ok"
+	id, err := result.LastInsertId()
+	entry.ID = id
+	jsonEntry, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return string(jsonEntry)
 }
 
 func addProject(this js.Value, args []js.Value) any {
@@ -101,7 +107,7 @@ func addProject(this js.Value, args []js.Value) any {
 }
 
 func getEntries(this js.Value, args []js.Value) any {
-	rows, err := db.Query(`SELECT id, name, project_id, started_at, ended_at, created_at FROM entries ORDER BY started_at DESC`)
+	rows, err := db.Query(`SELECT id, name, project_id, started_at, ended_at, created_at FROM entries WHERE ended_at IS NOT null ORDER BY started_at DESC`)
 	if err != nil {
 		return fmt.Sprintf("error: %v", err)
 	}
@@ -162,13 +168,64 @@ func deleteProject(this js.Value, args []js.Value) any {
 	return "ok"
 }
 
+func updateEntry(this js.Value, args []js.Value) any {
+	payload := args[0].String()
+
+	var entry Entry
+	if err := json.Unmarshal([]byte(payload), &entry); err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	_, err := db.Exec(`UPDATE entries SET name = ?, project_id = ?, started_at = ?, ended_at = ? WHERE id = ?`,
+		entry.Name,
+		entry.ProjectID,
+		entry.StartedAt,
+		entry.EndedAt,
+		entry.ID,
+	)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	jsonEntry, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return string(jsonEntry)
+}
+
+func getRunningEntry(this js.Value, args []js.Value) any {
+	var entry Entry
+	err := db.QueryRow(`SELECT id, name, project_id, started_at, ended_at, created_at FROM entries WHERE ended_at IS NULL LIMIT 1`).Scan(
+		&entry.ID,
+		&entry.Name,
+		&entry.ProjectID,
+		&entry.StartedAt,
+		&entry.EndedAt,
+		&entry.CreatedAt,
+	)
+	if err == sql.ErrNoRows {
+		return nil
+	}
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	jsonEntry, err := json.Marshal(entry)
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return string(jsonEntry)
+}
+
 func main() {
 	js.Global().Set("initConnection", js.FuncOf(initConnection))
+
 	js.Global().Set("addEntry", js.FuncOf(addEntry))
-	js.Global().Set("addProject", js.FuncOf(addProject))
 	js.Global().Set("getEntries", js.FuncOf(getEntries))
-	js.Global().Set("getProjects", js.FuncOf(getProjects))
 	js.Global().Set("deleteEntry", js.FuncOf(deleteEntry))
+	js.Global().Set("updateEntry", js.FuncOf(updateEntry))
+	js.Global().Set("getRunningEntry", js.FuncOf(getRunningEntry))
+
+	js.Global().Set("addProject", js.FuncOf(addProject))
+	js.Global().Set("getProjects", js.FuncOf(getProjects))
 	js.Global().Set("deleteProject", js.FuncOf(deleteProject))
 	select {}
 }

@@ -8,6 +8,7 @@ worker.onmessage = ({ data }) => {
 			workerReady = true;
 			worker.postMessage({ action: 'getProjects' });
 			worker.postMessage({ action: 'getEntries' });
+			worker.postMessage({ action: 'getRunningEntry' });
 			break;
 		case 'entries':
 			renderEntries(payload);
@@ -16,9 +17,29 @@ worker.onmessage = ({ data }) => {
 			updateProjectList(payload);
 			break;
 		case 'entryAdded':
+			if (payload && payload.ended_at === null) {
+				runningEntry = payload;
+				return ;
+			}
 			worker.postMessage({ action: 'getProjects' });
 			worker.postMessage({ action: 'getEntries' });
 			showToast('Entry saved.');
+			break;
+		case 'runningEntry':
+			if (!payload) return;
+			runningEntry = payload;
+			startedAt = payload.started_at;
+			timerDesc.value = payload.name;
+			if (payload.project_id) {
+				const project = [...allProjects].find(p => p.id === payload.project_id);
+				if (project) timerProject.value = project.name;
+			}
+			timerInterval = setInterval(() => {
+				elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
+			}, 1000);
+			elapsedEl.classList.add('running');
+			btnStart.classList.add('active');
+			btnLabel.textContent = 'Stop';
 			break;
 		case 'error':
 			showToast('Something went wrong.');
@@ -32,7 +53,7 @@ function send(action, payload = {}) {
 	worker.postMessage({ action, payload });
 }
 
-let pendingEntry = null;
+let runningEntry = null;
 
 let timerInterval = null;
 let startedAt = null;
@@ -74,37 +95,40 @@ function formatDate(ts) {
 }
 
 btnStart.addEventListener('click', () => {
-	if (timerInterval) {
-		const endedAt = Date.now();
-		clearInterval(timerInterval);
-		timerInterval = null;
+    if (timerInterval) {
+        const endedAt = Date.now();
+        clearInterval(timerInterval);
+        timerInterval = null;
+		runningEntry.ended_at = endedAt;
 
-		const projectValue = timerProject.value.trim();
-		const entry = {
-			name: timerDesc.value.trim() || 'Untitled',
-			started_at: startedAt,
-			ended_at: endedAt,
-			project_id: isNewProject(projectValue) ? null : getProjectId(projectValue),
-			projectName: isNewProject(projectValue) ? projectValue : null,
-		};
-		send('saveEntry', entry);
+        send('stopEntry', runningEntry);
 
-		timerDesc.value    = '';
-		timerProject.value = '';
-		startedAt          = null;
-		elapsedEl.textContent = '00:00:00';
-		elapsedEl.classList.remove('running');
-		btnStart.classList.remove('active');
-		btnLabel.textContent = 'Start';
-	} else {
-		startedAt = Date.now();
-		timerInterval = setInterval(() => {
-			elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
-		}, 1000);
-		elapsedEl.classList.add('running');
-		btnStart.classList.add('active');
-		btnLabel.textContent = 'Stop';
-	}
+        runningEntry = null;
+        timerDesc.value    = '';
+        timerProject.value = '';
+        startedAt          = null;
+        elapsedEl.textContent = '00:00:00';
+        elapsedEl.classList.remove('running');
+        btnStart.classList.remove('active');
+        btnLabel.textContent = 'Start';
+    } else {
+        startedAt = Date.now();
+        const projectValue = timerProject.value.trim();
+        send('saveEntry', {
+            name: timerDesc.value.trim() || 'Untitled',
+            started_at: startedAt,
+			ended_at: null,
+            project_id: isNewProject(projectValue) ? null : getProjectId(projectValue),
+            projectName: isNewProject(projectValue) ? projectValue : null,
+        });
+
+        timerInterval = setInterval(() => {
+            elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
+        }, 1000);
+        elapsedEl.classList.add('running');
+        btnStart.classList.add('active');
+        btnLabel.textContent = 'Stop';
+    }
 });
 
 const manualDesc            = document.getElementById('manual-desc');
@@ -249,7 +273,7 @@ function renderProjectsDialog() {
 		return `
 <div class="project-row">
 	<span class="project-row-name">${escHtml(p.name)}</span>
-	<button class="btn-delete" data-id="${p.id}" title="Delete" style="padding: 6px 10px 6px 10px;">Delete</button>
+	<button class="btn-delete" data-id="${p.id}" title="Delete" style="padding: 6px 10px 6px 10px;">DELETE</button>
 </div>`;
 	}).join('');
 

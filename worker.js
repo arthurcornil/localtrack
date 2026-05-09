@@ -18,24 +18,35 @@ initConnection();
 
 let entries;
 let projects;
+let entry;
 
 self.postMessage({ action: 'ready' });
 self.onmessage = ({ data }) => {
 	const { action, payload } = data;
 	switch (action) {
 		case 'saveEntry':
-			const entry = payload;
+			entry = payload;
 			if (entry.projectName) {
 				const projectId = addProject(JSON.stringify({ name: entry.projectName }));
 				entry.project_id = projectId;
 			}
 			delete entry.projectName;
-			addEntry(JSON.stringify(entry));
-			self.postMessage({ action: 'entryAdded' });
+			entry = JSON.parse(addEntry(JSON.stringify(entry)));
+			self.postMessage({ action: 'entryAdded', payload: entry });
+			break;
+		case 'stopEntry':
+			entry = updateEntry(JSON.stringify(payload));
+			entries = JSON.parse(getEntries());
+			self.postMessage({ action: 'entryAdded', payload: entry });
+			self.postMessage({ action: 'entries', payload: entries });
 			break;
 		case 'getEntries':
 			entries = JSON.parse(getEntries());
 			self.postMessage({ action: 'entries', payload: entries });
+			break;
+		case 'getRunningEntry':
+			entry = JSON.parse(getRunningEntry());
+			self.postMessage({ action: 'runningEntry', payload: entry });
 			break;
 		case 'getProjects':
 			projects = JSON.parse(getProjects());
