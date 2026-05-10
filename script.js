@@ -6,6 +6,7 @@ worker.onmessage = ({ data }) => {
 	switch (action) {
 		case 'ready':
 			workerReady = true;
+			document.getElementById('loading').classList.add('hidden');
 			worker.postMessage({ action: 'getProjects' });
 			worker.postMessage({ action: 'getEntries' });
 			worker.postMessage({ action: 'getRunningEntry' });
