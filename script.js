@@ -193,7 +193,7 @@ function totalMs(entries) {
 
 let allEntries = [];
 let activeProjectFilter = null;
-let activePeriod = 'all';
+let activePeriod = localStorage.getItem('activePeriod') ?? 'all';
 
 const projectSummaryEl = document.getElementById('project-summary');
 const entriesTitleEl   = document.getElementById('entries-title');
@@ -514,10 +514,13 @@ setupProjectInput(timerProject, timerProjectDropdown);
 setupProjectInput(manualProject, manualProjectDropdown);
 setupProjectInput(editEntryProject, editEntryProjectDropdown);
 
+document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.period === activePeriod));
+
 document.getElementById('period-toggle').addEventListener('click', e => {
 	const btn = e.target.closest('.period-btn');
 	if (!btn) return;
 	activePeriod = btn.dataset.period;
+	localStorage.setItem('activePeriod', activePeriod);
 	activeProjectFilter = null;
 	document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b === btn));
 	renderProjectSummary();
