@@ -1,10 +1,15 @@
+self.onerror = (event) => {
+	self.postMessage({ action: 'opfsLocked' });
+	return ;
+}
+
 const root = await navigator.storage.getDirectory();
 
 const handles = {};
 for (const suffix of ["", "-journal", "-wal"]) {
-    const name = "track.db" + suffix;
-    const fh = await root.getFileHandle(name, { create: true });
-    handles[name] = await fh.createSyncAccessHandle();
+	const name = "track.db" + suffix;
+	const fh = await root.getFileHandle(name, { create: true });
+	handles[name] = await fh.createSyncAccessHandle();
 }
 
 await fetch('wasm_exec.js')

@@ -52,6 +52,9 @@ worker.onmessage = ({ data }) => {
 			worker.postMessage({ action: 'getProjects' });
 			showToast('Project updated.');
 			break;
+		case 'opfsLocked':
+			showOPFSLockedError();
+			break;
 		case 'error':
 			showToast('Something went wrong.');
 			console.error(payload);
@@ -340,6 +343,13 @@ function renderEntries(entries = []) {
 
 function escHtml(str) {
 	return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showOPFSLockedError() {
+	const overlay = document.getElementById('loading');
+	overlay.querySelector('.loading-spinner').remove();
+	overlay.querySelector('.loading-message').textContent =
+		'localtrack is already open in another tab. Close it and reload this page.';
 }
 
 let toastTimer = null;
