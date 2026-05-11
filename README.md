@@ -34,7 +34,7 @@ The goal was to validate the architecture, not ship a product. Key limitations:
 cd backend
 GOOS=js GOARCH=wasm go build -o ../main.wasm .
 cd ..
-cp $(go env GOROOT)/misc/wasm/wasm_exec.js .
+cp $(go env GOROOT)/lib/wasm/wasm_exec.js .
 # serve with any static file server
 ```
 
